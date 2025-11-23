@@ -1,5 +1,86 @@
 const { Workout } = require('../model/users');
 
+const calculateCalories = (duration, distance, steps, activity) => {
+  // Basic example formula for calories burned
+  // These coefficients may vary based on activity and user specifics
+  let calPerMin = 5; // default calories per minute
+  switch (activity) {
+    case 'Running':
+      calPerMin = 10;
+      break;
+    case 'Cycling':
+      calPerMin = 8;
+      break;
+    case 'Skipping':
+      calPerMin = 9;
+      break;
+    case 'Walking':
+      calPerMin = 4;
+      break;
+    case 'Gym':
+      calPerMin = 6;
+      break;
+    case 'Hiking':
+      calPerMin = 7;
+      break;
+    case 'Yoga':
+      calPerMin = 3;
+      break;
+  }
+
+  return Math.round(calPerMin * duration);
+};
+
+const getUserStats = async (req, res) => {
+  try {
+    let { username, activity } = req.params;
+    let { startDate, endDate } = req.query;
+
+    username = decodeURIComponent(username);
+    activity = decodeURIComponent(activity);
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({ error: "startDate and endDate query parameters are required" });
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ error: "Invalid date format for startDate or endDate" });
+    }
+
+    const workoutDoc = await Workout.findOne({ username });
+    if (!workoutDoc) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Filter activities by activity name and date range
+    const filteredActivities = workoutDoc.activities.filter(a => 
+      a.activity === activity && a.date >= start && a.date <= end
+    );
+console.log("filteredActivities", filteredActivities);
+    const totalDuration = filteredActivities.reduce((sum, a) => sum + a.duration, 0);
+    const totalDistance = filteredActivities.reduce((sum, a) => sum + a.distance, 0);
+    const totalSteps = filteredActivities.reduce((sum, a) => sum + a.steps, 0);
+    const totalCalories = calculateCalories(totalDuration, totalDistance, totalSteps, activity);
+
+    res.json({
+      activity,
+      totalDuration,
+      totalDistance,
+      totalSteps,
+      totalCalories,
+      startDate,
+      endDate,
+    });
+
+  } catch (error) {
+    console.error('Error in getUserStats:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 const getGoal = async (req, res) => {
   try {
     let { username, activity } = req.params;
@@ -144,4 +225,4 @@ const listWorkouts = async (req, res) => {
   }
 };
 
-module.exports = { getGoal, saveGoal, saveEntry, listWorkouts, getUserProfile };
+module.exports = { getGoal, saveGoal, saveEntry, listWorkouts, getUserProfile, getUserStats };
