@@ -74,6 +74,7 @@ const FitnessDashboard = ({ username }) => {
   const { profile: userProfile, loading, error } = useSelector((state) => state.userProfile);
   const [selectedActivity, setSelectedActivity] = useState("Running");
   const [selectedFrequency, setSelectedFrequency] = useState("monthly");
+  const [selectedSidebar, setSelectedSidebar] = useState("home"); // New state for sidebar panel
 
   useEffect(() => {
     if (username) {
@@ -345,12 +346,10 @@ const FitnessDashboard = ({ username }) => {
                   sx={{
                     borderRadius: 2,
                     mb: 0.5,
-                    ...(idx === 0 && {
-                      bgcolor: "white",
-                      boxShadow: 1,
-                    }),
+                    bgcolor: selectedSidebar === item.label.toLowerCase() ? "white" : "transparent",
+                    boxShadow: selectedSidebar === item.label.toLowerCase() ? 1 : "none",
                   }}
-                  onClick={() => alert(`Navigate to ${item.label}`)}
+                  onClick={() => setSelectedSidebar(item.label.toLowerCase())}
                 >
                   <ListItemIcon sx={{ minWidth: 34 }}>{item.icon}</ListItemIcon>
                   <ListItemText primary={item.label} />
